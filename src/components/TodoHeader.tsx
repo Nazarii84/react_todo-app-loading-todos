@@ -1,4 +1,5 @@
 import React from 'react';
+import classNames from 'classnames';
 
 type Props = {
   isAllCompleted: boolean;
@@ -9,9 +10,9 @@ export const TodoHeader: React.FC<Props> = ({ isAllCompleted }) => {
     <header className="todoapp__header">
       <button
         type="button"
-        className={
-          isAllCompleted ? 'todoapp__toggle-all active' : 'todoapp__toggle-all'
-        }
+        className={classNames('todoapp__toggle-all', {
+          active: isAllCompleted,
+        })}
         data-cy="ToggleAllButton"
       />
 

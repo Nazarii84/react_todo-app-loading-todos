@@ -1,21 +1,48 @@
 import React from 'react';
 import { Filter } from '../types/Filter';
+import { Todo } from '../types/Todo';
+import classNames from 'classnames';
 
 type Props = {
-  activeTodosCount: number;
+  todos: Todo[];
   filter: Filter;
-  hasCompletedTodos: boolean;
   handleFilterClick: (
     value: Filter,
   ) => (event: React.MouseEvent<HTMLAnchorElement>) => void;
 };
 
+type FilterMeta = {
+  label: string;
+  href: string;
+  dataCy: string;
+};
+
+const filtersMeta: Record<Filter, FilterMeta> = {
+  [Filter.All]: {
+    label: 'All',
+    href: '#/',
+    dataCy: 'FilterLinkAll',
+  },
+  [Filter.Active]: {
+    label: 'Active',
+    href: '#/active',
+    dataCy: 'FilterLinkActive',
+  },
+  [Filter.Completed]: {
+    label: 'Completed',
+    href: '#/completed',
+    dataCy: 'FilterLinkCompleted',
+  },
+};
+
 export const TodoFooter: React.FC<Props> = ({
-  activeTodosCount,
+  todos,
   filter,
-  hasCompletedTodos,
   handleFilterClick,
 }) => {
+  const activeTodosCount = todos.filter(todo => !todo.completed).length;
+  const hasCompletedTodos = todos.some(todo => todo.completed);
+
   return (
     <footer className="todoapp__footer" data-cy="Footer">
       <span className="todo-count" data-cy="TodosCounter">
@@ -23,42 +50,24 @@ export const TodoFooter: React.FC<Props> = ({
       </span>
 
       <nav className="filter" data-cy="Filter">
-        <a
-          href="#/"
-          className={
-            filter === Filter.All ? 'filter__link selected' : 'filter__link'
-          }
-          data-cy="FilterLinkAll"
-          onClick={handleFilterClick(Filter.All)}
-        >
-          All
-        </a>
+        {Object.values(Filter).map(value => {
+          const { label, href, dataCy } = filtersMeta[value as Filter];
 
-        <a
-          href="#/active"
-          className={
-            filter === Filter.Active ? 'filter__link selected' : 'filter__link'
-          }
-          data-cy="FilterLinkActive"
-          onClick={handleFilterClick(Filter.Active)}
-        >
-          Active
-        </a>
-
-        <a
-          href="#/completed"
-          className={
-            filter === Filter.Completed
-              ? 'filter__link selected'
-              : 'filter__link'
-          }
-          data-cy="FilterLinkCompleted"
-          onClick={handleFilterClick(Filter.Completed)}
-        >
-          Completed
-        </a>
+          return (
+            <a
+              key={value}
+              href={href}
+              className={classNames('filter__link', {
+                selected: filter === value,
+              })}
+              data-cy={dataCy}
+              onClick={handleFilterClick(value as Filter)}
+            >
+              {label}
+            </a>
+          );
+        })}
       </nav>
-
       <button
         type="button"
         className="todoapp__clear-completed"

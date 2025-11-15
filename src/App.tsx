@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { UserWarning } from './UserWarning';
 import { USER_ID, getTodos } from './api/todos';
 import { Todo } from './types/Todo';
@@ -9,6 +9,7 @@ import { Filter } from './types/Filter';
 import { TodoItem } from './components/TodoItem';
 import { TodoHeader } from './components/TodoHeader';
 import { TodoFooter } from './components/TodoFooter';
+import classNames from 'classnames';
 
 export const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -35,33 +36,34 @@ export const App: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [error]);
 
-  if (!USER_ID) {
-    return <UserWarning />;
-  }
-
-  const activeTodosCount = todos.filter(todo => !todo.completed).length;
-  const hasCompletedTodos = todos.some(todo => todo.completed);
-
   const isAllCompleted =
     todos.length > 0 && todos.every(todo => todo.completed);
 
-  const visibleTodos = todos.filter(todo => {
-    if (filter === Filter.Active) {
-      return !todo.completed;
-    }
+  const visibleTodos = useMemo(
+    () =>
+      todos.filter(todo => {
+        switch (filter) {
+          case Filter.Active:
+            return !todo.completed;
 
-    if (filter === Filter.Completed) {
-      return todo.completed;
-    }
+          case Filter.Completed:
+            return todo.completed;
 
-    return true;
-  });
-
+          default:
+            return true;
+        }
+      }),
+    [todos, filter],
+  );
   const handleFilterClick =
     (value: Filter) => (event: React.MouseEvent<HTMLAnchorElement>) => {
       event.preventDefault();
       setFilter(value);
     };
+
+  if (!USER_ID) {
+    return <UserWarning />;
+  }
 
   return (
     <div className="todoapp">
@@ -80,21 +82,19 @@ export const App: React.FC = () => {
 
         {todos.length > 0 && (
           <TodoFooter
-            activeTodosCount={activeTodosCount}
+            todos={todos}
             filter={filter}
-            hasCompletedTodos={hasCompletedTodos}
             handleFilterClick={handleFilterClick}
           />
         )}
       </div>
 
-      {/* DON'T use conditional rendering to hide the notification */}
-      {/* Add the 'hidden' class to hide the message smoothly */}
       <div
         data-cy="ErrorNotification"
-        className={`notification is-danger is-light has-text-weight-normal ${
-          error ? '' : 'hidden'
-        }`}
+        className={classNames(
+          'notification is-danger is-light has-text-weight-normal',
+          { hidden: !error },
+        )}
       >
         <button
           data-cy="HideErrorButton"
@@ -102,7 +102,6 @@ export const App: React.FC = () => {
           className="delete"
           onClick={() => setError(null)}
         />
-        {/* show only one message at a time */}
         {error}
       </div>
     </div>
